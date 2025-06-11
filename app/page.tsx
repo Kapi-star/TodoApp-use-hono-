@@ -1,19 +1,36 @@
 'use client'
 import { useEffect, useState } from 'react'
 
+type Todo = {
+  task: string;
+  isFinish: boolean;
+};
+
 export default function Home() {
-  const [message, setMessage] = useState()
+  const [todo, setTodo] = useState<Todo[]>()
 
   useEffect(() => {
     const fetchData = async () => {
       const res = await fetch('/api/todo')
-      const { message } = await res.json()
-      setMessage(message)
+      const todo = await res.json()
+      setTodo(todo)
     }
     fetchData()
   }, [])
 
-  if (!message) return <p>Loading...</p>
+  console.log(todo);
 
-  return <p>{message}</p>
+  if (!todo) return <p>Loading...</p>
+  
+  let tasks = "TODO List"
+
+  for (let i = 0; i < todo.length; i++) {
+    if (!todo[i].isFinish) {
+      tasks += `\n未完了: ${todo[i].task}`
+    } else {
+      tasks += `\n完了: ${todo[i].task}`
+    }
+  }
+
+  return <pre>{tasks}</pre>
 }

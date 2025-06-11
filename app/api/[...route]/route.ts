@@ -5,10 +5,19 @@ export const runtime = 'edge'
 
 const app = new Hono().basePath('/api')
 
+const todoList =[
+  {
+    task: 'Play tennnis',
+    isFinish: false
+  },
+  {
+    task: 'Play soccer',
+    isFinish: true
+  }
+]
+
 app.get('/todo', (c) => {
-  return c.json({
-    message: 'Hello from Hono!'
-  })
+  return c.json(todoList);
 })
 
 export const GET = handle(app)
