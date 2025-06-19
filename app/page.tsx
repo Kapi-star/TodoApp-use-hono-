@@ -5,11 +5,14 @@ type Todo = {
   task: string;
   isFinish: boolean;
   id: number;
+  createdAt: Date;
 };
 
 export default function Home() {
-  const [todo, setTodo] = useState<Todo[]>();
-  const [newTask, setNewTask] = useState<string>('');
+  const [todo, setTodo] = useState<Todo[]>()
+  const [newTask, setNewTask] = useState<string>('')
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editedTask, setEditedTask] = useState<string>('')
 
   // GET
   useEffect(() => {
@@ -47,7 +50,7 @@ export default function Home() {
     }
   }
 
-  // PUT
+  // PUT: 完了状態変更
   const toggleIsFinish = async (id: number, current: boolean) => {
     const res = await fetch(`/api/todo/${id}`, {
       method: 'PUT',
@@ -64,6 +67,30 @@ export default function Home() {
     }
   }
 
+  // PUT: タスク内容編集
+  const handleUpdate = async (id: number) => {
+    const res = await fetch(`/api/todo/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ task: editedTask }),
+    })
+
+    if (res.ok) {
+      const updated = await fetch('/api/todo')
+      const updatedTodo = await updated.json()
+      setTodo(updatedTodo)
+      setEditingId(null)
+      setEditedTask('')
+    } else {
+      alert('編集失敗')
+    }
+  }
+
+  const handleEditClick = (id: number, currentTask: string) => {
+    setEditingId(id)
+    setEditedTask(currentTask)
+  }
+
   // DELETE
   const handleDelete = async (id: number) => {
     const res = await fetch(`/api/todo/${id}`, {
@@ -72,7 +99,6 @@ export default function Home() {
 
     if (res.status === 200) {
       alert('削除成功！')
-      setNewTask('')
       const updated = await fetch('/api/todo')
       const updatedTodo = await updated.json()
       setTodo(updatedTodo)
@@ -82,7 +108,7 @@ export default function Home() {
   }
 
   return (
-    <> 
+    <>
       <h2>TODO LIST</h2>
       <ul>
         {todo.map((t) => (
@@ -93,33 +119,41 @@ export default function Home() {
                 checked={t.isFinish}
                 onChange={() => toggleIsFinish(t.id, t.isFinish)}
               />
-                {t.task}
+              {editingId === t.id ? (
+                <input
+                  type="text"
+                  value={editedTask}
+                  onChange={(e) => setEditedTask(e.target.value)}
+                />
+              ) : (
+                t.task
+              )}
             </label>
-            <button
-             onClick={() => handleDelete(t.id)}
-            >
-              削除
-            </button>
+
+            {editingId === t.id ? (
+              <button onClick={() => editedTask.trim() ? handleUpdate(t.id) : alert("タスクを入力してください")}>保存</button>
+            ) : (
+              <button onClick={() => handleEditClick(t.id, t.task)}>編集</button>
+            )}
+
+            <button onClick={() => handleDelete(t.id)}>削除</button>
           </li>
         ))}
       </ul>
+
       <fieldset>
         <legend>タスク追加</legend>
-          <label htmlFor="task">Task: </label>
-          <input
-            type="text"
-            id="task"
-            name="task"
-            value = {newTask}
-            onChange={(e) => setNewTask(e.target.value)}
-            required
-          />
-          <button
-            onClick={handleSubmit}
-          >
-            追加
-          </button>
+        <label htmlFor="task">Task: </label>
+        <input
+          type="text"
+          id="task"
+          name="task"
+          value={newTask}
+          onChange={(e) => setNewTask(e.target.value)}
+          required
+        />
+        <button onClick={handleSubmit}>追加</button>
       </fieldset>
     </>
-  );
+  )
 }
